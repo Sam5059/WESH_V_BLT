@@ -1,0 +1,52 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { router } from 'expo-router';
+import { supabase } from '@/lib/supabase';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+export default function HomePage() {
+  const [categories, setCategories] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const { t, language } = useLanguage();
+
+  useEffect(() => { fetchCategories(); }, []);
+
+  async function fetchCategories() {
+    const { data } = await supabase.from('categories').select('*');
+    setCategories(data || []);
+  }
+
+  const handleSearch = () => {
+    if (searchText.trim().length > 0) {
+      router.push(`/search?q=${encodeURIComponent(searchText)}`);
+    }
+  };
+
+  const handleCategoryPress = (category) => {
+    router.push(`/search?category_id=${category.id}`);
+  };
+
+  return (
+    <ScrollView style={{ padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10 }}>
+        🔎 {language === 'ar' ? 'بحث' : language === 'en' ? 'Search' : 'Recherche'}
+      </Text>
+      <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+        <TextInput
+          placeholder={language === 'ar' ? 'ما الذي تبحث عنه؟' : language === 'en' ? 'What are you looking for?' : 'Que cherchez-vous ?'}
+          value={searchText}
+          onChangeText={setSearchText}
+          style={{ flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 10 }}
+        />
+        <TouchableOpacity onPress={handleSearch} style={{ marginLeft: 8, backgroundColor: '#2563EB', borderRadius: 8, paddingHorizontal: 12, justifyContent: 'center' }}>
+          <Text style={{ color: '#fff' }}>{language === 'ar' ? 'بحث' : language === 'en' ? 'Search' : 'Chercher'}</Text>
+        </TouchableOpacity>
+      </View>
+      {categories.map((c) => (
+        <TouchableOpacity key={c.id} style={{ backgroundColor: '#f3f3f3', padding: 12, borderRadius: 8, marginBottom: 8 }} onPress={() => handleCategoryPress(c)}>
+          <Text>{c.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+}
